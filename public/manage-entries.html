@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Entries</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+
+    <!-- Navigation placeholder -->
+    <div id="nav-placeholder"></div>
+
+    <div class="container mx-auto px-4 py-6">
+        <h2 class="text-lg font-semibold mb-4">Manage Entries</h2>
+
+        <input type="text" id="searchInput" placeholder="Search for a word..." class="border rounded p-2" oninput="loadEntries(1)">
+    
+        <!-- Delete All Button -->
+        <button onclick="deleteAllEntries()" class="bg-red-500 text-white px-4 py-2 mb-4 rounded hover:bg-red-600">
+            Delete All Entries
+        </button>
+    
+        <!-- Table for managing entries -->
+        <div class="overflow-x-auto">
+            <table class="table-auto min-w-full border-collapse bg-white shadow-lg rounded-lg">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="border px-4 py-2">Danish Word/Phrase</th>
+                        <th class="border px-4 py-2">Translation</th>
+                        <th class="border px-4 py-2">Examples</th>
+                        <th class="border px-4 py-2">Synonym</th>
+                        <th class="border px-4 py-2">Meaning</th>
+                        <th class="border px-4 py-2">Class</th>
+                        <th class="border px-4 py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="entriesTableBody">
+                    <!-- Entries will be populated here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Section -->
+    <div class="flex justify-center mt-4" id="paginationControls">
+        <!-- Pagination buttons will go here -->
+    </div>
+    </div>
+
+    <script>
+        // Load navigation dynamically
+        function loadNav() {
+            fetch('/nav.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('nav-placeholder').innerHTML = data;
+                })
+                .catch(err => console.error('Error loading nav:', err));
+        }
+
+        loadNav(); // Load the navigation
+
+
+
+        const limit = 10;  // Entries per page// Fetch and display entries with pagination and search
+        function loadEntries(page = 1) {
+    const searchTerm = document.getElementById('searchInput').value || '';
+    
+    fetch(`/api/manage-entries?page=${page}&search=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('entriesTableBody');
+            tableBody.innerHTML = '';  // Clear existing table content
+
+            // Populate the table with entries
+            data.words.forEach(word => {
+                const row = `
+                    <tr>
+    <td class="border px-4 py-2">
+        <textarea id="danish-${word.id}" class="bg-gray-50 border px-2 py-1 w-full">${word.danish}</textarea>
+    </td>
+    <td class="border px-4 py-2">
+        <textarea id="translation-${word.id}" class="bg-gray-50 border px-2 py-1 w-full">${word.translation}</textarea>
+    </td>
+    <td class="border px-4 py-2">
+        <textarea id="examples-${word.id}" class="bg-gray-50 border px-2 py-1 w-full">${word.examples}</textarea>
+    </td>
+    <td class="border px-4 py-2">
+        <textarea id="synonym-${word.id}" class="bg-gray-50 border px-2 py-1 w-full">${word.synonym}</textarea>
+    </td>
+    <td class="border px-4 py-2">
+        <textarea id="meaning-${word.id}" class="bg-gray-50 border px-2 py-1 w-full">${word.meaning}</textarea>
+    </td>
+    <td class="border px-4 py-2">
+        <textarea id="wordclass-${word.id}" class="bg-gray-50 border px-2 py-1 w-full">${word.wordclass}</textarea>
+    </td>
+    <td class="border px-4 py-2">
+        <button class="bg-green-500 text-white px-2 py-1 rounded" onclick="editEntry(${word.id})">Save</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteEntry(${word.id})">Delete</button>
+    </td>
+</tr>
+
+                `;
+                tableBody.innerHTML += row;
+            });
+
+            // Update pagination controls
+            createPagination(page, Math.ceil(data.total / limit));
+        });
+}
+
+// Function to create pagination links
+function createPagination(currentPage, totalPages) {
+    const pagination = document.getElementById('paginationControls');
+    pagination.innerHTML = '';  // Clear existing pagination
+
+    // Show the first page
+    if (currentPage > 2) pagination.innerHTML += createPageLink(1);  // Only add the first page when you're past page 2
+    
+    // Add an ellipsis before the current page
+    if (currentPage > 3) pagination.innerHTML += '<span>...</span>';  // Ellipsis before current page if you're past page 3
+    
+    // Previous page link (if applicable)
+    if (currentPage > 1) pagination.innerHTML += createPageLink(currentPage - 1);
+
+    // Current page
+    pagination.innerHTML += `<span class="px-4 py-2 mx-1 border rounded bg-blue-500 text-white">${currentPage}</span>`;  // Current page
+
+    // Next page link (if applicable)
+    if (currentPage < totalPages) pagination.innerHTML += createPageLink(currentPage + 1);
+
+    // Add ellipsis after the current page if there are more pages
+    if (currentPage < totalPages - 2) pagination.innerHTML += '<span>...</span>';
+
+    // Show the last page if you're not on the last page
+    if (currentPage < totalPages - 1) pagination.innerHTML += createPageLink(totalPages);
+}
+
+// Helper function to create a page link
+function createPageLink(page) {
+    return `<a href="#" onclick="event.preventDefault(); loadEntries(${page})" class="px-4 py-2 mx-1 border rounded bg-white text-blue-500">${page}</a>`;
+}
+
+    // Function to edit an entry
+    function editEntry(id) {
+        const danish = document.getElementById(`danish-${id}`).value;
+        const translation = document.getElementById(`translation-${id}`).value;
+        const examples = document.getElementById(`examples-${id}`).value;
+        const synonym = document.getElementById(`synonym-${id}`).value;
+        const meaning = document.getElementById(`meaning-${id}`).value;
+        const wordclass = document.getElementById(`wordclass-${id}`).value;
+
+        fetch(`/api/words/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ danish, translation, examples, synonym, meaning, wordclass })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert('Entry updated successfully');
+                loadEntries();  // Reload entries after saving
+            } else {
+                alert('Error updating entry');
+            }
+        });
+    }
+
+    // Function to delete an individual entry
+    function deleteEntry(id) {
+        if (confirm('Are you sure you want to delete this entry?')) {
+            fetch(`/api/words/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('Entry deleted successfully');
+                    loadEntries();  // Reload entries after deleting one
+                } else {
+                    alert('Error deleting entry');
+                }
+            });
+        }
+    }
+
+    // Function to delete all entries
+    function deleteAllEntries() {
+        if (confirm('Are you sure you want to delete all entries?')) {
+            fetch('/api/words', { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert('All entries deleted successfully');
+                        loadEntries();  // Reload entries after deleting all
+                    } else {
+                        alert('Error deleting entries');
+                    }
+                });
+        }
+    }
+
+    // Ensure entries load correctly on page load
+window.onload = function() {
+    loadEntries(1);  // Load first page of entries
+};
+    </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary - Fysik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <!-- Dynamic Navigation Bar -->
+    <div id="nav-placeholder"></div>
+
+    <input type="text" id="searchInput" placeholder="Search for a word..." onkeyup="searchWord()" class="p-2 border rounded w-80 mb-4">
+
+    <main class="w-full">
+        <div class="overflow-x-auto px-4 sm:px-6 lg:px-8">
+            <table class="table-auto min-w-full max-w-screen-lg mx-auto border-collapse bg-white shadow-lg rounded-lg overflow-hidden border">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border px-4 py-2 text-left">Danish Word/Phrase</th>
+                        <th class="border px-4 py-2 text-left">Translation</th>
+                        <th class="border px-4 py-2 text-left">Examples</th>
+                        <th class="border px-4 py-2 text-left">Synonym</th>
+                        <th class="border px-4 py-2 text-left">Meaning</th>
+                        <th class="border px-4 py-2 text-left">Class</th>
+                    </tr>
+                </thead>
+            <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="flex justify-center mt-4">
+            <div id="pagination" class="flex space-x-2"></div>
+        </div>
+    </main>
+
+    <script>
+        // Store the fetched words so we can filter them locally
+        let fetchedWords = [];
+        let filteredWords = [];
+
+        // Search functionality: fetch all words from the database and filter
+        function searchWord() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            if (searchTerm) {
+                // Fetch all words from the database when performing a search
+                fetch('/api/all-words')
+                    .then(response => response.json())
+                    .then(data => {
+                        fetchedWords = data.words;  // Store all fetched words
+
+                        // Filter and sort alphabetically if search term is provided
+                        filteredWords = fetchedWords
+                            .filter(word => word.danish.toLowerCase().startsWith(searchTerm))
+                            .sort((a, b) => a.danish.localeCompare(b.danish));
+
+                        renderWords(); // Re-render the filtered words
+                    })
+                    .catch(err => console.error('Error fetching all words for search:', err));
+            } else {
+                // If no search term, reset to default paginated view
+                fetchWords();  // Re-fetch paginated data
+            }
+        }
+
+        const limit = 10;  // Number of words per page
+
+        // Load words with pagination
+        function fetchWords(page = 1) {
+            fetch(`/api/words?page=${page}`)  // By default, fetch paginated results
+                .then(response => response.json())
+                .then(data => {
+                    fetchedWords = data.words;  // Store the fetched words for the current page
+                    filteredWords = [...fetchedWords];  // Show words as they are fetched initially (in added order)
+
+                    renderWords();  // Render the words
+                    createPagination(page, Math.ceil(data.total / limit));  // Update pagination links
+                })
+                .catch(err => console.error('Error fetching paginated words:', err));
+        }
+
+        // Render words from the filteredWords array
+        function renderWords() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';  // Clear the table
+
+            filteredWords.forEach(word => {
+                const row = `
+                    <tr class="hover:bg-gray-100">
+                        <td class="border px-4 py-2">${word.danish.replace(/\\n/g, '<br>')}</td>
+                        <td class="border px-4 py-2">${word.translation.replace(/\\n/g, '<br>')}</td>
+                        <td class="border px-4 py-2">${word.examples.replace(/\\n/g, '<br>')}</td>
+                        <td class="border px-4 py-2">${word.synonym.replace(/\\n/g, '<br>')}</td>
+                        <td class="border px-4 py-2">${word.meaning.replace(/\\n/g, '<br>')}</td>
+                        <td class="border px-4 py-2">${word.wordclass.replace(/\\n/g, '<br>')}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // Load navigation dynamically
+        function loadNav() {
+            fetch('/nav.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('nav-placeholder').innerHTML = data;
+                    updateNavBar();  // Ensure the nav is updated after it's loaded
+                })
+                .catch(err => console.error('Error loading nav:', err));
+        }
+
+        loadNav();
+
+        // Update navigation based on login status
+        function updateNavBar() {
+            const isLoggedIn = localStorage.getItem('loggedIn');
+            console.log('LocalStorage Logged In:', isLoggedIn);
+
+            if (isLoggedIn === 'true') {
+                document.getElementById('add-word-link').style.display = 'block';
+                document.getElementById('upload-csv-link').style.display = 'block';
+                document.getElementById('parse-csv-link').style.display = 'block';
+                document.getElementById('manage-entries-link').style.display = 'block';
+                document.getElementById('login-link').style.display = 'none';
+                document.getElementById('logout-link').style.display = 'block';
+            } else {
+                document.getElementById('add-word-link').style.display = 'none';
+                document.getElementById('upload-csv-link').style.display = 'none';
+                document.getElementById('parse-csv-link').style.display = 'none';
+                document.getElementById('manage-entries-link').style.display = 'none';
+                document.getElementById('login-link').style.display = 'block';
+                document.getElementById('logout-link').style.display = 'none';
+            }
+        }
+
+        // Updated Pagination Logic with Correct Handling of Ellipses
+        function createPagination(currentPage, totalPages) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';  // Clear pagination
+
+    // Always show the first page
+    pagination.innerHTML += createPageLink(1, currentPage === 1);
+
+    // Add "..." if the current page is far from the first page
+    if (currentPage > 3) {
+        pagination.innerHTML += '<span class="mx-1">...</span>';
+    }
+
+    // Show pages around the current one (if not the first or last pages)
+    if (currentPage > 2) {
+        pagination.innerHTML += createPageLink(currentPage - 1, false);  // Previous page
+    }
+    
+    if (currentPage !== 1 && currentPage !== totalPages) {
+        pagination.innerHTML += createPageLink(currentPage, true);  // Current page
+    }
+
+    if (currentPage < totalPages - 1) {
+        pagination.innerHTML += createPageLink(currentPage + 1, false);  // Next page
+    }
+
+    // Add "..." if the current page is far from the last page
+    if (currentPage < totalPages - 2) {
+        pagination.innerHTML += '<span class="mx-1">...</span>';
+    }
+
+    // Always show the last page
+    pagination.innerHTML += createPageLink(totalPages, currentPage === totalPages);
+}
+
+// Helper function to create a page link with button styling
+function createPageLink(page, isActive = false) {
+    return `<a href="#" onclick="fetchWords(${page})" class="px-4 py-2 mx-1 border rounded ${
+        isActive ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
+    }">${page}</a>`;
+}
+
+        // Fetch the first page when the page loads
+        fetchWords();
+    </script>
+</body>
+</html>

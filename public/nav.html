@@ -1,0 +1,49 @@
+<nav class=" p-4">
+    <div class="flex flex-wrap justify-center gap-2 sm:gap-4">
+        <a href="/index.html" class="px-4 py-2 text-white bg-blue-600 rounded-lg text-sm sm:text-base hover:bg-blue-700">Home</a>
+        <a href="/add-word.html" class="px-4 py-2 text-white bg-blue-600 rounded-lg text-sm sm:text-base hover:bg-blue-700">Add Word</a>
+        <a href="/parse-csv.html" class="px-4 py-2 text-white bg-blue-600 rounded-lg text-sm sm:text-base hover:bg-blue-700">Add CSV</a>
+        <a href="/manage-entries.html" class="px-4 py-2 text-white bg-blue-600 rounded-lg text-sm sm:text-base hover:bg-blue-700">Manage Entries</a>
+        <a href="/logout.html" class="px-4 py-2 text-white bg-blue-600 rounded-lg text-sm sm:text-base hover:bg-blue-700">Logout</a>
+    </div>
+</nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        updateNavBar();
+    });
+
+    // Function to check if the user is logged in and update the navbar accordingly
+    function updateNavBar() {
+        const isLoggedIn = localStorage.getItem('loggedIn');
+
+        if (isLoggedIn === 'true') {
+            // Show the restricted links and logout button
+            document.getElementById('add-word-link').style.display = 'block';
+            document.getElementById('upload-csv-link').style.display = 'block';
+            document.getElementById('parse-csv-link').style.display = 'block';
+            document.getElementById('manage-entries-link').style.display = 'block';
+
+            // Hide login button and show logout button
+            document.getElementById('login-link').style.display = 'none';
+            document.getElementById('logout-link').style.display = 'block';
+        } else {
+            // Hide restricted links
+            document.getElementById('add-word-link').style.display = 'none';
+            document.getElementById('upload-csv-link').style.display = 'none';
+            document.getElementById('parse-csv-link').style.display = 'none';
+            document.getElementById('manage-entries-link').style.display = 'none';
+
+            // Show login button and hide logout button
+            document.getElementById('login-link').style.display = 'block';
+            document.getElementById('logout-link').style.display = 'none';
+        }
+    }
+
+    // Logout function
+    function logout() {
+        localStorage.removeItem('loggedIn');  // Clear login status
+        updateNavBar();  // Update the navbar to reflect logged out state
+        window.location.href = '/index.html';  // Redirect to home page after logout
+    }
+</script>

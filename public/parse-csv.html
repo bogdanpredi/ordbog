@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parse CSV Text</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+
+    <!-- Dynamic Navigation Bar -->
+    <div id="nav-placeholder"></div>
+
+    <h1 class="text-2xl font-bold mb-6">Paste CSV Formatted Text</h1>
+    <form id="csvForm" class="flex flex-col space-y-4 w-80">
+        <textarea id="csvText" rows="10" placeholder="Paste CSV content here..." class="p-2 border rounded"></textarea>
+        <button type="button" onclick="submitCSV()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Submit</button>
+    </form>
+
+    <script>
+         // Function to dynamically load the navigation bar
+        function loadNav() {
+        fetch('/nav.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('nav-placeholder').innerHTML = data;
+                updateNavBar();  // Ensure the nav is updated only after it's loaded
+            })
+            .catch(err => console.error('Error loading nav:', err));
+        }
+
+        loadNav();  // Call the function to load the navigation bar when the page loads
+
+        // Function to check if the user is logged in and update the navbar accordingly
+        function updateNavBar() {
+            const isLoggedIn = localStorage.getItem('loggedIn');
+            console.log('LocalStorage Logged In:', isLoggedIn);
+
+            if (isLoggedIn === 'true') {
+                // Show the restricted links and logout button
+                document.getElementById('add-word-link').style.display = 'block';
+                document.getElementById('upload-csv-link').style.display = 'block';
+                document.getElementById('parse-csv-link').style.display = 'block';
+                document.getElementById('manage-entries-link').style.display = 'block';
+
+                // Hide login button and show logout button
+                document.getElementById('login-link').style.display = 'none';
+                document.getElementById('logout-link').style.display = 'block';
+            } else {
+                // Hide restricted links
+                document.getElementById('add-word-link').style.display = 'none';
+                document.getElementById('upload-csv-link').style.display = 'none';
+                document.getElementById('parse-csv-link').style.display = 'none';
+                document.getElementById('manage-entries-link').style.display = 'none';
+
+                // Show login button and hide logout button
+                document.getElementById('login-link').style.display = 'block';
+                document.getElementById('logout-link').style.display = 'none';
+            }
+        }
+
+        async function submitCSV() {
+        const csvText = document.getElementById('csvText').value;
+
+        if (!csvText.trim()) {
+            alert('Please paste CSV formatted text.');
+            return;
+        }
+
+        console.log('Sending CSV Text:', csvText);  // Log the CSV text for debugging
+
+        try {
+            const response = await fetch('/api/parse-csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ csvText }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message);  // Success message
+                window.location.href = '/index.html';  // Redirect to main page
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error submitting CSV:', error);
+            alert('Error submitting CSV');
+        }
+    }
+    </script>
+</body>
+</html>

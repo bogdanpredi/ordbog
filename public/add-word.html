@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Vocabulary Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <!-- Dynamic Navigation Bar -->
+    <div id="nav-placeholder"></div>
+
+    <h1 class="text-2xl font-bold mb-6">Add a New Vocabulary Entry</h1>
+    <form id="addWordForm" class="flex flex-col space-y-4 w-80">
+        <input type="text" id="danish" placeholder="Danish Word/Phrase" class="p-2 border rounded">
+        <input type="text" id="translation" placeholder="Translation" class="p-2 border rounded">
+        <textarea id="examples" placeholder="Examples" class="p-2 border rounded"></textarea>
+        <input type="text" id="synonym" placeholder="Synonym" class="p-2 border rounded">
+        <textarea id="meaning" placeholder="Meaning" class="p-2 border rounded"></textarea>
+        <input type="text" id="wordclass" placeholder="Class" class="p-2 border rounded">
+        <button type="button" onclick="addWord()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Add Word</button>
+    </form>
+
+    <script>
+         // Function to dynamically load the navigation bar
+         // Function to dynamically load the navigation bar
+        function loadNav() {
+        fetch('/nav.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('nav-placeholder').innerHTML = data;
+                updateNavBar();  // Ensure the nav is updated only after it's loaded
+            })
+            .catch(err => console.error('Error loading nav:', err));
+        }
+
+        loadNav();  // Call the function to load the navigation bar when the page loads
+
+        // Function to check if the user is logged in and update the navbar accordingly
+        function updateNavBar() {
+            const isLoggedIn = localStorage.getItem('loggedIn');
+            console.log('LocalStorage Logged In:', isLoggedIn);
+
+            if (isLoggedIn === 'true') {
+                // Show the restricted links and logout button
+                document.getElementById('add-word-link').style.display = 'block';
+                document.getElementById('upload-csv-link').style.display = 'block';
+                document.getElementById('parse-csv-link').style.display = 'block';
+                document.getElementById('manage-entries-link').style.display = 'block';
+
+                // Hide login button and show logout button
+                document.getElementById('login-link').style.display = 'none';
+                document.getElementById('logout-link').style.display = 'block';
+            } else {
+                // Hide restricted links
+                document.getElementById('add-word-link').style.display = 'none';
+                document.getElementById('upload-csv-link').style.display = 'none';
+                document.getElementById('parse-csv-link').style.display = 'none';
+                document.getElementById('manage-entries-link').style.display = 'none';
+
+                // Show login button and hide logout button
+                document.getElementById('login-link').style.display = 'block';
+                document.getElementById('logout-link').style.display = 'none';
+            }
+        }
+
+        async function addWord() {
+        const danish = document.getElementById('danish').value.replace(/\\n/g, '\n');
+        const translation = document.getElementById('translation').value.replace(/\\n/g, '\n');
+        const examples = document.getElementById('examples').value.replace(/\\n/g, '\n');
+        const synonym = document.getElementById('synonym').value.replace(/\\n/g, '\n');
+        const meaning = document.getElementById('meaning').value.replace(/\\n/g, '\n');
+        const wordclass = document.getElementById('wordclass').value.replace(/\\n/g, '\n');
+
+        const response = await fetch('/api/words', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ danish, translation, examples, synonym, meaning, wordclass }),
+        });
+
+        if (response.ok) {
+            alert('Word added successfully');
+            window.location.href = '/index.html';  // Redirect after adding the word
+        } else {
+            const errorMsg = await response.json();
+            console.error('Error adding word:', errorMsg);
+            alert('Error adding word');
+        }
+    }
+
+    // Log the received data to check the format
+console.log('Received data:', req.body);
+
+    </script>
+</body>
+</html>

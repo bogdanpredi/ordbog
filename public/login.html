@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex flex-col items-center justify-center min-h-screen">
+        <h1 class="text-2xl font-bold mb-6">Login</h1>
+        <form id="loginForm" class="flex flex-col space-y-4 w-80">
+            <input type="text" id="username" placeholder="Username" class="p-2 border rounded">
+            <input type="password" id="password" placeholder="Password" class="p-2 border rounded">
+            <button type="button" onclick="login()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Login</button>
+        </form>
+        <div id="loginFeedback" class="mt-4 text-lg"></div> <!-- Feedback area -->
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const feedback = document.getElementById('loginFeedback');  // For feedback display
+
+            // Reset the feedback area
+            feedback.textContent = '';
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Successful login
+                    feedback.textContent = 'Login successful! Redirecting in half a seconds...';
+                    localStorage.setItem('loggedIn', 'true');  // Set loggedIn in localStorage
+
+                    // Redirect after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 500);
+                } else {
+                    // Failed login
+                    feedback.textContent = `Login failed: ${result.message}`;
+                }
+            } catch (error) {
+                feedback.textContent = 'An error occurred during login. Please try again.';
+                console.error('Login error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
